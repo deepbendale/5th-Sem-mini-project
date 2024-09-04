@@ -29,7 +29,7 @@ export default function CardComponent({
 }) {
   const [taskName, setTaskName] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
-  const [taskPriority, setTaskPriority] = useState("");
+  const [taskPriority, setTaskPriority] =  useState("");
   const [taskAssignee, setTaskAssignee] = useState("");
 
   useEffect(() => {
