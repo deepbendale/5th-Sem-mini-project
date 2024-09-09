@@ -95,7 +95,7 @@ export default function Layout() {
             display: "flex",
             flexDirection: "row",
             gap: "20px",
-            marginTop: "80px", // Adjust as needed to fit below the button
+            marginTop: "80px",
           }}
         >
           <DragDropContext onDragEnd={handleOnDragEnd}>
