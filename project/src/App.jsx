@@ -1,12 +1,13 @@
 import "./App.css";
 
 import Layout from "./components/Layout";
-import Sidebar from "./components/Sidebar";
+
+import Topbar from "./components/Topbar";
 
 function App() {
   return (
     <>
-      <Sidebar />
+      <Topbar />
       <Layout />
     </>
   );
