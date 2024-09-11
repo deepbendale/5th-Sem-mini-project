@@ -1,215 +1,164 @@
 import React, { useState } from "react";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import Topbar from "./Topbar";
+import Cardmodal from "./Cardmodal";
 import CardItem from "./CardItem";
-import CardComponent from "./CardComponent";
+import Box from "@mui/material/Box";
+import AddTaskButton from "./Addtaskbutton";
+import { DragDropContext, Droppable } from "react-beautiful-dnd";
 
 export default function Layout() {
-  const [open, setOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [tasks, setTasks] = useState([]);
-  const [editIndex, setEditIndex] = useState(null);
+  const [editIndex, setEditIndex] = useState(null); // Tracks the index of the task to edit
 
-  const handleOpen = () => setOpen(true);
+  const handleOpen = () => setModalOpen(true);
   const handleClose = () => {
-    setOpen(false);
-    setEditIndex(null);
+    setModalOpen(false);
+    setEditIndex(null); // Reset edit index when closing modal
   };
 
-  const handleCreateTask = (task) => {
+  const handleCreateTask = (newTask) => {
     if (editIndex !== null) {
-      const updatedTasks = tasks.map((t, index) =>
-        index === editIndex ? { ...task, status: t.status } : t
+      // Edit existing task
+      const updatedTasks = tasks.map((task, i) =>
+        i === editIndex ? newTask : task
       );
       setTasks(updatedTasks);
     } else {
-      setTasks([...tasks, { ...task, status: "backlog" }]);
+      // Add new task
+      setTasks((prevTasks) => [...prevTasks, newTask]);
     }
     handleClose();
   };
 
-  const handleOnDragEnd = (result) => {
-    const { destination, source, draggableId } = result;
+  const taskToEdit = editIndex !== null ? tasks[editIndex] : null; // Get the task to edit
 
+  const onDragEnd = (result) => {
+    const { source, destination } = result;
+
+    // If dropped outside the list
     if (!destination) return;
 
+    // Reorder tasks in the list
     const updatedTasks = Array.from(tasks);
     const [movedTask] = updatedTasks.splice(source.index, 1);
-    movedTask.status = destination.droppableId;
     updatedTasks.splice(destination.index, 0, movedTask);
 
     setTasks(updatedTasks);
   };
 
-  const getTasksByStatus = (status) =>
-    tasks.filter((task) => task.status === status);
-
   return (
-    <Box
-      sx={{
-        position: "relative",
-        right: "30rem",
-        bottom: "5rem",
-        height: "100vh",
-        padding: "16px",
-        overflowY: "scroll",
-        scrollbarWidth: "none",
-        "&::-webkit-scrollbar": {
-          display: "none",
-        },
-      }}
-    >
-      <Box
-        sx={{
-          position: "absolute",
-          top: "16px",
-          left: "16px",
-        }}
-      >
-        <Button
-          variant="contained"
-          sx={{
-            fontSize: "1.2rem",
-            padding: "8px 16px",
-            minWidth: "150px",
-            color: "white",
-            "&:hover": {
-              backgroundColor: "#45a049",
-            },
-            boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-          }}
-          onClick={handleOpen}
-        >
-          Add Task
-        </Button>
-      </Box>
-      <CardComponent
-        open={open}
+    <>
+      <Topbar />
+      <AddTaskButton onClick={handleOpen} />
+      <Cardmodal
+        open={modalOpen}
         handleClose={handleClose}
         onCreate={handleCreateTask}
-        taskToEdit={editIndex !== null ? tasks[editIndex] : null}
+        taskToEdit={taskToEdit}
       />
-      {tasks.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "20px",
-            marginTop: "80px",
-          }}
-        >
-          <DragDropContext onDragEnd={handleOnDragEnd}>
-            <Droppable droppableId="backlog" direction="vertical">
-              {(provided) => (
+
+      <Box
+        sx={{
+          padding: 2,
+          display: "flex",
+          flexDirection: "row",
+          gap: 2,
+          width: "100%", // Full width of the container
+          height: "calc(100vh - 64px)", // Adjust height based on the top bar's height
+        }}
+      >
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="backlog">
+            {(provided) => (
+              <Box
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                sx={{
+                  flex: 1,
+                  border: "1px solid black",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
                 <Box
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
                   sx={{
-                    flex: 1,
-                    padding: "10px",
-                    backgroundColor: "#f4f4f4",
-                    borderRadius: "8px",
-                    minHeight: "300px",
+                    padding: 1,
+                    fontWeight: "bold",
+                    borderBottom: "1px solid black",
                   }}
                 >
-                  <h2>Backlog</h2>
-                  {getTasksByStatus("backlog").map((task, index) => (
-                    <Draggable key={task.id} draggableId={task.id} index={index}>
-                      {(provided) => (
-                        <CardItem
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          key={task.id}
-                          task={task}
-                          index={index}
-                          tasks={tasks}
-                          setTasks={setTasks}
-                          setEditIndex={setEditIndex}
-                          setOpen={setOpen}
-                        />
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
+                  Backlog
                 </Box>
-              )}
-            </Droppable>
-            <Droppable droppableId="in-progress" direction="vertical">
-              {(provided) => (
+                {tasks.map((task, index) => (
+                  <CardItem
+                    key={task.taskName} // Ensure each CardItem has a unique key
+                    task={task}
+                    index={index}
+                    tasks={tasks}
+                    setTasks={setTasks}
+                    setEditIndex={setEditIndex}
+                    setOpen={setModalOpen}
+                  />
+                ))}
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
+
+          <Droppable droppableId="inprogress">
+            {(provided) => (
+              <Box
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                sx={{
+                  flex: 1,
+                  border: "1px solid black",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
                 <Box
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
                   sx={{
-                    flex: 1,
-                    padding: "10px",
-                    backgroundColor: "#e4e4e4",
-                    borderRadius: "8px",
-                    minHeight: "300px",
+                    padding: 1,
+                    fontWeight: "bold",
+                    borderBottom: "1px solid black",
                   }}
                 >
-                  <h2>In Progress</h2>
-                  {getTasksByStatus("in-progress").map((task, index) => (
-                    <Draggable key={task.id} draggableId={task.id} index={index}>
-                      {(provided) => (
-                        <CardItem
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          key={task.id}
-                          task={task}
-                          index={index}
-                          tasks={tasks}
-                          setTasks={setTasks}
-                          setEditIndex={setEditIndex}
-                          setOpen={setOpen}
-                        />
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
+                  In-Progress
                 </Box>
-              )}
-            </Droppable>
-            <Droppable droppableId="completed" direction="vertical">
-              {(provided) => (
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
+
+          <Droppable droppableId="completed">
+            {(provided) => (
+              <Box
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                sx={{
+                  flex: 1,
+                  border: "1px solid black",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
                 <Box
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
                   sx={{
-                    flex: 1,
-                    padding: "10px",
-                    backgroundColor: "#d4edda",
-                    borderRadius: "8px",
-                    minHeight: "300px",
+                    padding: 1,
+                    fontWeight: "bold",
+                    borderBottom: "1px solid black",
                   }}
                 >
-                  <h2>Completed</h2>
-                  {getTasksByStatus("completed").map((task, index) => (
-                    <Draggable key={task.id} draggableId={task.id} index={index}>
-                      {(provided) => (
-                        <CardItem
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          key={task.id}
-                          task={task}
-                          index={index}
-                          tasks={tasks}
-                          setTasks={setTasks}
-                          setEditIndex={setEditIndex}
-                          setOpen={setOpen}
-                        />
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
+                  Completed
                 </Box>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </Box>
-      )}
-    </Box>
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </Box>
+    </>
   );
 }

@@ -21,7 +21,7 @@ const modalStyle = {
   p: 4,
 };
 
-export default function CardComponent({
+export default function Cardmodal({
   open,
   handleClose,
   onCreate,
